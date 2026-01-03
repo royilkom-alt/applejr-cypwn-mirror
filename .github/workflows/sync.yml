@@ -3,7 +3,7 @@ name: Sync Cypwn Repo
 on:
   workflow_dispatch:
   schedule:
-    - cron: "0 */6 * * *" # update tiap 6 jam
+    - cron: "0 */6 * * *"
 
 permissions:
   contents: write
@@ -13,12 +13,15 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Fetch Cypwn JSON (OFFICIAL)
+      - name: Fetch raw cypwn
         run: |
-          curl -L https://raw.githubusercontent.com/cypwn/cypwn-repo/main/cypwn.json -o cypwn.json
+          curl -L https://raw.githubusercontent.com/cypwn/cypwn-repo/main/cypwn.json -o raw.txt
+
+      - name: Convert to valid JSON
+        run: |
+          sed -n '/{/,/}/p' raw.txt > cypwn.json
 
       - name: Validate JSON
         run: |
