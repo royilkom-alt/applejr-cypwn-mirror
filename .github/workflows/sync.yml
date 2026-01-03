@@ -1,27 +1,36 @@
-name: Sync Cypwn Repo 
+name: Sync Cypwn Repo (Full Mirror)
 
 on:
-  schedule:
-    - cron: "0 */6 * * *"   # tiap 6 jam
   workflow_dispatch:
+  schedule:
+    - cron: "0 */6 * * *" # tiap 6 jam
+
+permissions:
+  contents: write
 
 jobs:
   sync:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Fetch Cypwn JSON
         run: |
-          curl -L https://ipa.cypwn.xyz/cypwn.json -o cypwn.json
+          curl -L https://ipa.cypwn.xyz/cypwn.json -o raw.json
 
-      - name: Commit & Push if changed
+          jq '
+            if .apps then {apps:.apps}
+            elif .repoApps then {apps:.repoApps}
+            else .
+            end
+          ' raw.json > cypwn.json
+
+          rm raw.json
+
+      - name: Commit changes
         run: |
           git config user.name "AppleJr Bot"
           git config user.email "bot@applejr.net"
-
           git add cypwn.json
-          git diff --cached --quiet || git commit -m "🔄 Auto sync Cypwn repo"
+          git commit -m "🔄 Auto sync Cypwn repo" || echo "No changes"
           git push
