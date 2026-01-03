@@ -1,9 +1,9 @@
-name: Sync Cypwn Repo (Safe)
+name: Sync Cypwn Repo
 
 on:
   workflow_dispatch:
   schedule:
-    - cron: "0 */6 * * *"
+    - cron: "0 */6 * * *" # update tiap 6 jam
 
 permissions:
   contents: write
@@ -11,44 +11,23 @@ permissions:
 jobs:
   sync:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repo
+        uses: actions/checkout@v4
 
-      - name: Fetch Cypwn Raw
+      - name: Fetch Cypwn JSON (OFFICIAL)
         run: |
-          curl -L \
-            -H "User-Agent: AppleJrBot/1.0" \
-            -H "Accept: application/json" \
-            https://ipa.cypwn.xyz/cypwn.json \
-            -o raw.txt
+          curl -L https://raw.githubusercontent.com/cypwn/cypwn-repo/main/cypwn.json -o cypwn.json
 
-          echo "---- RAW HEAD ----"
-          head -n 5 raw.txt
-
-      - name: Normalize JSON (Safe)
+      - name: Validate JSON
         run: |
-          # ambil JSON pertama yang valid
-          sed -n '/{/,/}/p' raw.txt > extracted.json || true
+          jq . cypwn.json > /dev/null
 
-          # validasi json
-          if jq empty extracted.json >/dev/null 2>&1; then
-            jq '
-              if .apps then {apps:.apps}
-              elif .repoApps then {apps:.repoApps}
-              else .
-              end
-            ' extracted.json > cypwn.json
-          else
-            echo '{"apps":[]}' > cypwn.json
-          fi
-
-          rm -f raw.txt extracted.json
-
-      - name: Commit if Changed
+      - name: Commit & Push
         run: |
           git config user.name "AppleJr Bot"
           git config user.email "bot@applejr.net"
-
           git add cypwn.json
-          git diff --cached --quiet && echo "No changes" || \
-          git commit -m "🔄 Auto sync Cypwn repo" && git push
+          git commit -m "🔄 Auto sync Cypwn repo" || echo "No changes"
+          git push
