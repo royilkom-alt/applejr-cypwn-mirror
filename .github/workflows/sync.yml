@@ -1,4 +1,4 @@
-name: Sync Cypwn Repo
+name: Sync Cypwn Repo 
 
 on:
   schedule:
