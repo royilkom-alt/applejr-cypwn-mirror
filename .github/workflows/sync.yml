@@ -1,0 +1,27 @@
+name: Sync Cypwn Repo
+
+on:
+  schedule:
+    - cron: "0 */6 * * *"   # tiap 6 jam
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Fetch Cypwn JSON
+        run: |
+          curl -L https://ipa.cypwn.xyz/cypwn.json -o cypwn.json
+
+      - name: Commit & Push if changed
+        run: |
+          git config user.name "AppleJr Bot"
+          git config user.email "bot@applejr.net"
+
+          git add cypwn.json
+          git diff --cached --quiet || git commit -m "🔄 Auto sync Cypwn repo"
+          git push
